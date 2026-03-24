@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # ─── MONGODB COMPONENT ──────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:latest
+    container_name: jobtrackr-mongo
+    ports:
+      - "27018:27017" # Exposed to host so you can connect via MongoDB Compass testing (host port 27018)
+    environment:
+      - MONGO_INITDB_DATABASE=JobTrackr
+    volumes:
+      - mongo-data:/data/db # Persist data across container restarts
+    networks:
+      - jobtrackr-network
+
+  # ─── EXPRESS BACKEND COMPONENT ──────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend # Uses the backend Dockerfile
+      dockerfile: Dockerfile
+    container_name: jobtrackr-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/JobTrackr # Notice 'mongodb' is the hostname from above!
+      - JWT_SECRET=super_secret_docker_key_12345
+      - JWT_EXPIRES_IN=30d
+      - FRONTEND_URL=http://localhost:3000 # To allow CORS
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend/src:/app/src # Hot reload local code edits without rebuilding container
+    networks:
+      - jobtrackr-network
+    command: npm run dev
+
+  # ─── NEXT.JS FRONTEND COMPONENT ──────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: jobtrackr-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+      - INTERNAL_API_URL=http://backend:5000/api
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src:ro # Read-only mount to local changes to Nextjs
+    networks:
+      - jobtrackr-network
+    command: npm run dev
+
+# Volume maps so mongodb isn't wiped clean every time `docker-compose down` is called
+volumes:
+  mongo-data:
+
+# Internal virtual bridge network so backend can reach mongodb via `mongodb://mongodb:x`
+networks:
+  jobtrackr-network:
+    driver: bridge
