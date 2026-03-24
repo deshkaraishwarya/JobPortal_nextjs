@@ -37,3 +37,7 @@ docker-compose.override.yml
 # Logs
 logs/
 *.log
+
+# Personal Walkthroughs & Prep
+PHASE*_WALKTHROUGH.md
+TESTING_INTERVIEW_PREP.md
