@@ -58,5 +58,3 @@ cd backend
 npm run test
 ```
 
-## Phases Walkthrough
-Check out the `PHASE_X_WALKTHROUGH.md` files located in the root directory for highly detailed step-by-step explanations of my thought processes, design decisions, and architectural implementation methodologies used to construct this stack natively.
